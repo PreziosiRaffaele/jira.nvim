@@ -3,15 +3,15 @@ local Utils = require("jira.utils")
 
 ---@class JiraConfig
 ---@field domain string
----@field user string
 ---@field token string
 ---@field key string | string[]
+---@field api_version? number
 ---@field format? fun(issue: table): string[]
 local config = {
 	domain = vim.env.JIRA_DOMAIN,
-	user = vim.env.JIRA_USER,
 	token = vim.env.JIRA_API_TOKEN,
 	key = vim.env.JIRA_PROJECT_KEY or { "PM" },
+	api_version = 3,
 }
 
 ---@return string[]
@@ -24,10 +24,10 @@ end
 
 ---@param issue_id string
 local function get_issue(issue_id)
-	local response = curl.get("https://" .. config.domain .. "/rest/api/3/issue/" .. issue_id, {
+	local response = curl.get("https://" .. config.domain .. "/rest/api/" .. config.api_version .. "/issue/" .. issue_id, {
 		headers = {
 			["Content-Type"] = "application/json",
-			["Authorization"] = "Basic " .. Utils.b64encode(config.user .. ":" .. config.token),
+			["Authorization"] = "Bearer " .. config.token,
 		},
 	})
 	if response.status < 400 then
