@@ -24,16 +24,20 @@ end
 
 ---@param issue_id string
 local function get_issue(issue_id)
-	local response = curl.get("https://" .. config.domain .. "/rest/api/" .. config.api_version .. "/issue/" .. issue_id, {
+	local url = "https://" .. config.domain .. "/rest/api/" .. config.api_version .. "/issue/" .. issue_id
+	print("Jira: Requesting URL: " .. url)
+	local response = curl.get(url, {
 		headers = {
 			["Content-Type"] = "application/json",
 			["Authorization"] = "Bearer " .. config.token,
 		},
 	})
 	if response.status < 400 then
+		print("Jira: Successful response: " .. response.status)
 		return vim.fn.json_decode(response.body)
 	else
-		print("Non 200 response: " .. response.status)
+		print("Jira: Error response: " .. response.status)
+		print("Jira: Error Body: " .. response.body)
 	end
 end
 
@@ -82,10 +86,16 @@ end
 
 function Jira.view_issue()
 	local issue_id = Jira.parse_issue() or vim.fn.input("Issue: ")
+	print("Jira: view_issue() - issue_id: " .. vim.inspect(issue_id))
+	if not issue_id or issue_id == "" then
+		print("Jira: No issue ID provided or parsed.")
+		return
+	end
 	local issue = get_issue(issue_id)
+	print("Jira: view_issue() - raw issue data: " .. vim.inspect(issue))
 	vim.schedule(function()
 		if issue == nil then
-			print("Invalid response")
+			print("Jira: Invalid response or issue is nil.")
 			return
 		end
 		local format = config.format or format_issue
